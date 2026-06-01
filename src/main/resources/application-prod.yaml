@@ -1,0 +1,6 @@
+logging:
+  level:
+    web: WARN
+
+server:
+  port: 8082
