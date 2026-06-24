@@ -1,3 +1,18 @@
-logging:
-  level:
-    web: debug
+spring:
+  application:
+    name: vtuber-card-battle
+  profiles:
+    active: dev
+app:
+  name: My Application
+  max-users: 100
+  jwt-secret: my-secret-key
+  upload-dir: /var/uploads
+
+shop:
+  name: 林's Book Shop
+  max-items-per-page: 20
+  currency: TWD
+
+server:
+  port: 9090

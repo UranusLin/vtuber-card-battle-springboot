@@ -67,7 +67,7 @@ public class UserController {
                                            @RequestBody User updatedUser) {
         for (User user : users) {
             if (user.getId().equals(id)) {
-                user.setName(updatedUser.getName());
+                user.setUsername(updatedUser.getUsername());
                 user.setEmail(updatedUser.getEmail());
                 return ResponseEntity.ok(user);
             }

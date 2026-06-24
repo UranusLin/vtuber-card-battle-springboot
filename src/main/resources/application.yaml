@@ -1,15 +1,18 @@
 spring:
   application:
     name: vtuber-card-battle
-  profiles:
-    active: dev
-app:
-  name: My Application
-  max-users: 100
-  jwt-secret: my-secret-key
-  upload-dir: /var/uploads
+  datasource:
+    url: jdbc:postgresql://localhost:5432/vcb2
+    username: postgres
+    password: my_secret_password
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    jpa:
+      show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
-shop:
-  name: 林's Book Shop
-  max-items-per-page: 20
-  currency: TWD
