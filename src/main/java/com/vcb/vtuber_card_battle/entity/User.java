@@ -36,8 +36,9 @@ public class User extends BaseEntity{
     private Boolean isActive = true;
 
     // 一個使用者對應一個使用者資料（UserProfile）
+    // @OneToOne 這是強制inner join
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL,
-            optional = false)
+            optional = true)
     @ToString.Exclude
     private UserProfile profile;
 }

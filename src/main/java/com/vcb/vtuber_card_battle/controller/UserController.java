@@ -1,6 +1,7 @@
 package com.vcb.vtuber_card_battle.controller;
 
 import com.vcb.vtuber_card_battle.entity.User;
+import com.vcb.vtuber_card_battle.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Logger;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -25,13 +28,18 @@ public class UserController {
     // 暫時用 List 模擬資料庫（下一單元再接真正的 DB）
     private List<User> users = new ArrayList<>();
     private Long nextId = 1L;
+    private final UserService userService;
+
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     // ─────────────────────────────────────────
     // GET /api/users → 取得所有使用者
     // ─────────────────────────────────────────
     @GetMapping
     public ResponseEntity<List<User>> getAllUsers() {
-        return ResponseEntity.ok(users);  // HTTP 200 + JSON 列表
+        return ResponseEntity.ok(userService.getAllUser());  // HTTP 200 + JSON 列表
     }
 
     // ─────────────────────────────────────────
@@ -39,10 +47,11 @@ public class UserController {
     // ─────────────────────────────────────────
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
-        Optional<User> user = users.stream()
-                .filter(u -> u.getId().equals(id))
-                .findFirst();
-
+//        Optional<User> user = users.stream()
+//                .filter(u -> u.getId().equals(id))
+//                .findFirst();
+        Optional<User> user = userService.getUserById(id);
+        log.info(user.toString());
         // 找到回 200，找不到回 404
         return user.map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -54,9 +63,7 @@ public class UserController {
     // ─────────────────────────────────────────
     @PostMapping
     public ResponseEntity<User> createUser(@RequestBody User user) {
-        user.setId(nextId++);
-        users.add(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(user);  // HTTP 201
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(user));  // HTTP 201
     }
 
     // ─────────────────────────────────────────
