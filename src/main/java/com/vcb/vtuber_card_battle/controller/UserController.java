@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
@@ -38,8 +39,12 @@ public class UserController {
     // GET /api/users → 取得所有使用者
     // ─────────────────────────────────────────
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
-        return ResponseEntity.ok(userService.getAllUser());  // HTTP 200 + JSON 列表
+    public ResponseEntity<List<User>> getAllUsers(@RequestParam(required = false) Boolean active) {
+        if (active != null) {
+            return ResponseEntity.ok(userService.getUserByIsActive(active));
+        } else {
+            return ResponseEntity.ok(userService.getAllUser());  // HTTP 200 + JSON 列表
+        }
     }
 
     // ─────────────────────────────────────────
@@ -72,14 +77,9 @@ public class UserController {
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable Long id,
                                            @RequestBody User updatedUser) {
-        for (User user : users) {
-            if (user.getId().equals(id)) {
-                user.setUsername(updatedUser.getUsername());
-                user.setEmail(updatedUser.getEmail());
-                return ResponseEntity.ok(user);
-            }
-        }
-        return ResponseEntity.notFound().build();
+        return userService.updateUser(id, updatedUser)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     // ─────────────────────────────────────────
@@ -87,11 +87,15 @@ public class UserController {
     // ─────────────────────────────────────────
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        boolean removed = users.removeIf(u -> u.getId().equals(id));
-        if (removed) {
-            return ResponseEntity.noContent().build();  // HTTP 204
+        if (!userService.existsById(id)) {
+            return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.notFound().build();       // HTTP 404
+        userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<List<User>> getUserByUsernameKeyword(@RequestParam String keyword) {
+        return ResponseEntity.ok(userService.getUserByUsernameKeyword(keyword));
+    }
 }
