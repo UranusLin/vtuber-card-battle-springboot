@@ -2,7 +2,7 @@ spring:
   application:
     name: vtuber-card-battle
   datasource:
-    url: jdbc:postgresql://localhost:5432/vcb2
+    url: jdbc:postgresql://localhost:5432/vcb
     username: postgres
     password: my_secret_password
     driver-class-name: org.postgresql.Driver

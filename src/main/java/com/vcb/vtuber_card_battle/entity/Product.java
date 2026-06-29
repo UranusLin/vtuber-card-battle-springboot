@@ -34,6 +34,9 @@ public class Product extends BaseEntity{
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column()
+    private boolean isAvailable;
+
     // 多個商品對應一個分類
     // @JoinColumn 指定外鍵欄位名稱
     // fetch = FetchType.LAZY 延遲載入（強烈推薦！）

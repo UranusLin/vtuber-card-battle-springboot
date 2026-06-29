@@ -3,6 +3,10 @@ package com.vcb.vtuber_card_battle.controller;
 import com.vcb.vtuber_card_battle.entity.User;
 import com.vcb.vtuber_card_battle.service.UserService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -39,12 +43,28 @@ public class UserController {
     // GET /api/users → 取得所有使用者
     // ─────────────────────────────────────────
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers(@RequestParam(required = false) Boolean active) {
+    public Page<User> getAllUsers(@RequestParam(required = false) Boolean active,
+                                  @RequestParam(defaultValue = "0") int page,    // 第幾頁（從 0 開始）
+                                  @RequestParam(defaultValue = "10") int size,   // 每頁幾筆
+                                  @RequestParam(defaultValue = "id") String sortBy,
+                                  @RequestParam(defaultValue = "asc") String direction) {
+
+        // 建立 Pageable
+        Sort.Direction sortDirection = direction.equalsIgnoreCase("desc")
+                ? Sort.Direction.DESC : Sort.Direction.ASC;
+
+        Pageable pageable = (Pageable) PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+
         if (active != null) {
-            return ResponseEntity.ok(userService.getUserByIsActive(active));
+            return userService.getUserByIsActive(active, pageable);
         } else {
-            return ResponseEntity.ok(userService.getAllUser());  // HTTP 200 + JSON 列表
+            return userService.getAllUser(pageable);  // HTTP 200 + JSON 列表
         }
+    }
+
+    @GetMapping("/top3")
+    public ResponseEntity<List<User>> getTop3ByIsActive() {
+        return ResponseEntity.ok(userService.getTop3UserByCreateAtDesc());
     }
 
     // ─────────────────────────────────────────
@@ -86,16 +106,30 @@ public class UserController {
     // DELETE /api/users/{id} → 刪除使用者
     // ─────────────────────────────────────────
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        if (!userService.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
-        userService.deleteUser(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<Void> deactivateUser(@PathVariable Long id) {
+        boolean success = userService.deactivateUser(id);
+        return success
+                ? ResponseEntity.noContent().build()   // 204：停用成功
+                : ResponseEntity.notFound().build();    // 404：找不到
     }
 
     @GetMapping("/search")
     public ResponseEntity<List<User>> getUserByUsernameKeyword(@RequestParam String keyword) {
         return ResponseEntity.ok(userService.getUserByUsernameKeyword(keyword));
+    }
+
+    // GET /api/users/recent?days=7
+    @GetMapping("/recent")
+    public ResponseEntity<List<User>> getRecentUsers(
+            @RequestParam(defaultValue = "7") int days) {
+        return ResponseEntity.ok(userService.getRecentActiveUsers(days));
+    }
+
+    @PatchMapping("/rollback/{id}")
+    public ResponseEntity<Void> rollbackUser(@PathVariable Long id) {
+        boolean success = userService.rollbackUserStatus(id);
+        return success
+                ? ResponseEntity.ok().build()   // 200：回覆成功
+                : ResponseEntity.notFound().build();    // 404：找不到
     }
 }
