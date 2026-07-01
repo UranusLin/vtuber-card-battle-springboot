@@ -24,9 +24,10 @@ import java.util.List;
 @Builder
 public class Category extends BaseEntity {
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 100)
     private String name;
 
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     // 一個分類有多個商品
@@ -36,6 +37,7 @@ public class Category extends BaseEntity {
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL,
             orphanRemoval = true, fetch = FetchType.LAZY)
     @ToString.Exclude    // 避免 Lombok toString() 產生無窮遞迴！
+    @Builder.Default
     private List<Product> products = new ArrayList<>();
 
     // 雙向關聯的輔助方法（維持一致性）

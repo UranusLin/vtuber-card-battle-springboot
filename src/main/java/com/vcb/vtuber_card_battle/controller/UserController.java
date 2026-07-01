@@ -2,6 +2,7 @@ package com.vcb.vtuber_card_battle.controller;
 
 import com.vcb.vtuber_card_battle.entity.User;
 import com.vcb.vtuber_card_battle.service.UserService;
+import com.vcb.vtuber_card_battle.util.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
@@ -24,6 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
+
+import static com.vcb.vtuber_card_battle.util.Utils.getPageable;
 
 @Slf4j
 @RestController
@@ -49,11 +52,7 @@ public class UserController {
                                   @RequestParam(defaultValue = "id") String sortBy,
                                   @RequestParam(defaultValue = "asc") String direction) {
 
-        // 建立 Pageable
-        Sort.Direction sortDirection = direction.equalsIgnoreCase("desc")
-                ? Sort.Direction.DESC : Sort.Direction.ASC;
-
-        Pageable pageable = (Pageable) PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+        Pageable pageable = getPageable(page, size, sortBy, direction);
 
         if (active != null) {
             return userService.getUserByIsActive(active, pageable);

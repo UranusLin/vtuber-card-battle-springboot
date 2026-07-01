@@ -1,10 +1,12 @@
 package com.vcb.vtuber_card_battle.repository;
 
 import com.vcb.vtuber_card_battle.entity.Product;
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -22,10 +24,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("minPrice") BigDecimal minPrice,
             @Param("maxPrice") BigDecimal maxPrice
     );
-
-    // JOIN FETCH：解決 N+1 問題，一次查詢載入關聯（後面詳述）
-    @Query("SELECT p FROM Product p JOIN FETCH p.category WHERE p.id = :id")
-    Optional<Product> findByIdWithCategory(@Param("id") Long id);
 
     // 查詢部分欄位（DTO 投影）
     @Query("SELECT p.name, p.price FROM Product p WHERE p.category.id = :categoryId")
@@ -64,4 +62,38 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     // Slice：用於無限滾動
     Slice<Product> findByIsAvailable(Boolean isAvailable, Pageable pageable);
+
+    // 依分類 ID 和可用狀態查詢
+    Page<Product> findByCategory_IdAndIsAvailable(
+            Long categoryId, Boolean isAvailable, Pageable pageable);
+
+    // 關鍵字搜尋（名稱模糊查詢）
+    Page<Product> findByNameContainingIgnoreCaseAndIsAvailable(
+            String keyword, Boolean isAvailable, Pageable pageable);
+
+    // 價格區間查詢
+    @Query("SELECT p FROM Product p WHERE p.price BETWEEN :min AND :max AND p.isAvailable = true")
+    Page<Product> findAvailableByPriceRange(
+            @Param("min") BigDecimal min,
+            @Param("max") BigDecimal max,
+            Pageable pageable
+    );
+
+    // 查詢時同時載入 Category（解決 N+1 問題）
+    @Query("SELECT p FROM Product p JOIN FETCH p.category WHERE p.id = :id")
+    Optional<Product> findByIdWithCategory(@Param("id") Long id);
+
+    // 查詢庫存不足的商品
+    @Query("SELECT p FROM Product p WHERE p.stock <= :threshold AND p.isAvailable = true")
+    List<Product> findLowStockProducts(@Param("threshold") Integer threshold);
+
+    // 更新庫存
+    @Modifying
+    @Transactional
+    @Query("UPDATE Product p SET p.stock = p.stock - :quantity WHERE p.id = :id AND p.stock >= :quantity")
+    int decreaseStock(@Param("id") Long id, @Param("quantity") Integer quantity);
+
+    // 統計各分類商品數
+    @Query("SELECT c.name, COUNT(p) FROM Product p JOIN p.category c GROUP BY c.id, c.name")
+    List<Object[]> countProductsByCategory();
 }
